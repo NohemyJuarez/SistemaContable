@@ -1,0 +1,14 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Configuración privada
+config/conexion.php
+
+# Archivos temporales
+*.log
+*.tmp
+
+# Copias de seguridad
+*.bak
+*.sql.backup

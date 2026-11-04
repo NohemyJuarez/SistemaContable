@@ -1,0 +1,332 @@
+
+/* ==========================================
+   MENÚ LATERAL - SISTEMA CONTABLE
+========================================== */
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* PANEL LATERAL */
+
+.menu-lateral {
+    width: 260px;
+    min-width: 260px;
+    min-height: 100vh;
+    background: linear-gradient(
+        160deg,
+        #32117f 0%,
+        #4819a8 48%,
+        #241064 100%
+    );
+    color: white;
+    padding: 28px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 5px 0 25px rgba(40, 15, 100, 0.13);
+    z-index: 10;
+}
+
+/* CÍRCULOS DECORATIVOS */
+
+.menu-lateral::before,
+.menu-lateral::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.menu-lateral::before {
+    width: 230px;
+    height: 230px;
+    background: rgba(255, 255, 255, 0.045);
+    top: -100px;
+    right: -110px;
+}
+
+.menu-lateral::after {
+    width: 190px;
+    height: 190px;
+    background: rgba(153, 105, 255, 0.12);
+    bottom: 50px;
+    left: -120px;
+}
+
+/* IDENTIDAD DEL SISTEMA */
+
+.menu-lateral h2 {
+    color: white;
+    text-align: center;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    line-height: 1.4;
+    padding: 15px 8px 28px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    position: relative;
+    z-index: 1;
+}
+
+/* NAVEGACIÓN */
+
+.menu-lateral nav {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ENLACES */
+
+.menu-lateral a {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 49px;
+    padding: 12px 15px;
+    color: #eee8ff;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: background 0.25s ease,
+                transform 0.25s ease,
+                border-color 0.25s ease,
+                box-shadow 0.25s ease;
+}
+
+/* ICONOS DECORATIVOS */
+
+.menu-lateral a::before {
+    font-size: 19px;
+    width: 25px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.menu-lateral a[href*="index.php"]::before {
+    content: "⌂";
+}
+
+.menu-lateral a[href*="clientes.php"]::before {
+    content: "♟";
+}
+
+.menu-lateral a[href*="proveedores.php"]::before {
+    content: "▣";
+}
+
+.menu-lateral a[href*="productos.php"]::before {
+    content: "◆";
+}
+
+.menu-lateral a[href*="ventas.php"]::before {
+    content: "🛒";
+}
+
+.menu-lateral a[href*="compras.php"]::before {
+    content: "▤";
+}
+
+.menu-lateral a[href*="contabilidad.php"]::before {
+    content: "▥";
+}
+
+.menu-lateral a[href*="reportes.php"]::before {
+    content: "◔";
+}
+
+/* EFECTO AL PASAR EL CURSOR */
+
+.menu-lateral a:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.13);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateX(5px);
+}
+
+/* ENLACE ACTIVO: CLIENTES */
+
+.menu-lateral a[href*="clientes.php"] {
+    color: white;
+    background: linear-gradient(110deg, #8148ed, #a15af5);
+    box-shadow: 0 5px 15px rgba(15, 5, 60, 0.2);
+}
+
+/* PIE DEL MENÚ */
+
+.menu-lateral .pie-menu {
+    margin-top: auto;
+    padding: 25px 8px 5px;
+    text-align: center;
+    color: #d9ceff;
+    font-size: 12px;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
+}
+
+/* ==========================================
+   ADAPTACIÓN A TABLETS
+========================================== */
+
+@media (max-width: 1000px) {
+    .menu-lateral {
+        width: 220px;
+        min-width: 220px;
+        padding: 22px 12px;
+    }
+
+    .menu-lateral a {
+        font-size: 14px;
+        padding: 11px;
+    }
+
+    .contenido {
+        padding: 18px;
+    }
+}
+
+/* ==========================================
+   ADAPTACIÓN A CELULARES
+========================================== */
+
+@media (max-width: 650px) {
+    .layout {
+        flex-direction: column;
+    }
+
+    .menu-lateral {
+        width: 100%;
+        min-width: 0;
+        min-height: auto;
+        padding: 12px;
+    }
+
+    .menu-lateral h2 {
+        font-size: 18px;
+        padding: 8px;
+        margin-bottom: 12px;
+    }
+
+    .menu-lateral nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .menu-lateral a {
+        min-height: 43px;
+        padding: 9px;
+        font-size: 13px;
+        justify-content: flex-start;
+    }
+
+    .menu-lateral a:hover {
+        transform: none;
+    }
+
+    .menu-lateral .pie-menu {
+        display: none;
+    }
+
+    .contenido {
+        width: 100%;
+        padding: 13px;
+    }
+}
+
+
+
+/* ==========================================
+   BOTÓN PARA CONTRAER EL MENÚ
+========================================== */
+
+#btn-menu {
+    display: block;
+    width: 43px;
+    height: 40px;
+    margin: 0 auto 22px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.13);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+#btn-menu:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* MENÚ CONTRAÍDO */
+
+.menu-lateral.menu-contraido {
+    width: 85px;
+    min-width: 85px;
+    padding-left: 12px;
+    padding-right: 12px;
+    transition: width 0.3s ease, min-width 0.3s ease;
+}
+
+.menu-lateral {
+    transition: width 0.3s ease, min-width 0.3s ease;
+}
+
+.menu-lateral.menu-contraido h2 {
+    font-size: 0;
+    padding: 10px 0;
+    margin-bottom: 18px;
+}
+
+.menu-lateral.menu-contraido h2::before {
+    content: "SC";
+    font-size: 20px;
+    color: white;
+}
+
+.menu-lateral.menu-contraido a {
+    justify-content: center;
+    padding: 12px 5px;
+    font-size: 0;
+    gap: 0;
+}
+
+.menu-lateral.menu-contraido a::before {
+    font-size: 21px;
+}
+
+.menu-lateral.menu-contraido #btn-menu {
+    margin-bottom: 22px;
+}
+
+/* EN PANTALLAS PEQUEÑAS NO SE CONTRAE */
+
+@media (max-width: 650px) {
+    .menu-lateral.menu-contraido {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .menu-lateral.menu-contraido h2 {
+        font-size: 18px;
+    }
+
+    .menu-lateral.menu-contraido h2::before {
+        content: none;
+    }
+
+    .menu-lateral.menu-contraido a {
+        justify-content: flex-start;
+        font-size: 13px;
+    }
+}

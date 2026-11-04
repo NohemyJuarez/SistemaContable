@@ -1,0 +1,235 @@
+
+/* =================================
+   CONFIGURACIÓN GENERAL
+================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --morado: #5423bd;
+    --morado-oscuro: #29136f;
+    --morado-claro: #eee8ff;
+    --fondo: #f6f5fc;
+    --blanco: #ffffff;
+    --texto: #25213d;
+    --gris: #77758b;
+    --borde: #e6e2f0;
+    --verde: #16a765;
+    --rojo: #e7475b;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    min-height: 100vh;
+    font-size: 15px;
+}
+
+h1, h2, h3 {
+    color: var(--texto);
+    margin-bottom: 12px;
+}
+
+p {
+    line-height: 1.6;
+}
+
+/* =================================
+   CONTENEDOR PRINCIPAL
+================================= */
+
+.contenedor {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.contenido {
+    flex: 1;
+    min-width: 0;
+    padding: 28px;
+}
+
+/* =================================
+   ENCABEZADOS
+================================= */
+
+.encabezado {
+    background: linear-gradient(120deg, #35158d, #7139df);
+    color: var(--blanco);
+    padding: 28px;
+    border-radius: 18px;
+    margin-bottom: 24px;
+    box-shadow: 0 5px 18px rgba(65, 30, 145, 0.15);
+}
+
+.encabezado h1 {
+    color: var(--blanco);
+    font-size: clamp(22px, 3vw, 32px);
+    margin-bottom: 5px;
+}
+
+.encabezado p {
+    color: #eee7ff;
+}
+
+/* =================================
+   TARJETAS
+================================= */
+
+.tarjeta {
+    background: var(--blanco);
+    padding: 25px;
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    margin-bottom: 22px;
+    box-shadow: 0 3px 12px rgba(50, 35, 100, 0.05);
+    min-width: 0;
+}
+
+.tarjeta h2 {
+    font-size: 20px;
+    margin-bottom: 22px;
+}
+
+/* =================================
+   FORMULARIOS
+================================= */
+
+form {
+    width: 100%;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin: 15px 0 7px;
+    color: var(--texto);
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #dcd7e9;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--morado);
+    box-shadow: 0 0 0 3px rgba(84, 35, 189, 0.10);
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* =================================
+   BOTONES
+================================= */
+
+button,
+.boton {
+    display: inline-block;
+    padding: 11px 20px;
+    border: none;
+    border-radius: 9px;
+    background: var(--morado);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+button:hover,
+.boton:hover {
+    background: var(--morado-oscuro);
+    transform: translateY(-1px);
+}
+
+/* =================================
+   TABLAS
+================================= */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+th {
+    background: var(--morado);
+    color: white;
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+td {
+    padding: 13px 12px;
+    border-bottom: 1px solid var(--borde);
+    font-size: 13px;
+}
+
+tbody tr:hover {
+    background: #f7f3ff;
+}
+
+/* =================================
+   ENLACES
+================================= */
+
+a {
+    color: var(--morado);
+}
+
+/* =================================
+   DISEÑO ADAPTABLE
+================================= */
+
+@media (max-width: 900px) {
+    .contenido {
+        padding: 18px;
+    }
+
+    .tarjeta {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 600px) {
+    .contenido {
+        padding: 12px;
+    }
+
+    .encabezado {
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .tarjeta {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    table {
+        min-width: 750px;
+    }
+}
