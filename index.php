@@ -28,6 +28,7 @@
                 <a href="modulos/productos.php">Productos</a>
                 <a href="modulos/ventas.php">Ventas</a>
                 <a href="modulos/compras.php">Compras</a>
+                <a href="modulos/libro_compras.php">Libro de compras</a>
                 <a href="modulos/contabilidad.php">Contabilidad</a>
                 <a href="modulos/reportes.php">Reportes</a>
             </nav>

@@ -155,7 +155,7 @@
 
 /* ENLACE ACTIVO: CLIENTES */
 
-.menu-lateral a[href*="clientes.php"] {
+.menu-lateral a.activo {
     color: white;
     background: linear-gradient(110deg, #8148ed, #a15af5);
     box-shadow: 0 5px 15px rgba(15, 5, 60, 0.2);
