@@ -1,6 +1,8 @@
 
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+requerirEdicion("productos");
 
 $id = filter_input(INPUT_POST, "id", FILTER_VALIDATE_INT);
 $codigo = trim($_POST["codigo"] ?? "");

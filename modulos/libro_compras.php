@@ -1,5 +1,8 @@
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+
+requerirAcceso("libro_compras");
 
 $desde = trim($_GET["desde"] ?? "");
 $hasta = trim($_GET["hasta"] ?? "");
@@ -71,27 +74,7 @@ $totalGeneral  = array_sum(array_column($compras, "total"));
 <body>
     <div class="layout">
 
-        <aside class="menu-lateral">
-            <h2>SISTEMA CONTABLE</h2>
-
-            <button type="button" id="btn-menu"
-                aria-label="Contraer menú"
-                aria-expanded="true">
-                ☰
-            </button>
-
-            <nav>
-                <a href="../index.php">Inicio</a>
-                <a href="clientes.php">Clientes</a>
-                <a href="proveedores.php">Proveedores</a>
-                <a href="productos.php">Productos</a>
-                <a href="ventas.php">Ventas</a>
-                <a href="compras.php">Compras</a>
-                <a href="libro_compras.php" class="activo">Libro de compras</a>
-                <a href="contabilidad.php">Contabilidad</a>
-                <a href="reportes.php">Reportes</a>
-            </nav>
-        </aside>
+        <?php require "../includes/menu.php"; ?>
 
         <main class="contenido">
             <header class="encabezado">

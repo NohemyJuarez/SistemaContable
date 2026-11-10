@@ -1,13 +1,16 @@
-
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+
+requerirAcceso("ventas");
+$puedeRegistrar = puedeEditar("ventas");
+$usuarioSesion = usuarioActual();
 
 $mensaje = "";
 $error = "";
 
 $clientes = [];
 $productos = [];
-$usuarios = [];
 $metodos = [];
 $impuestos = [];
 $historialVentas = [];
@@ -26,11 +29,6 @@ try {
          ORDER BY nombre"
     )->fetchAll(PDO::FETCH_ASSOC);
 
-    $usuarios = $conexion->query(
-        "SELECT id, nombre FROM usuarios
-         WHERE estado = 'Activo' ORDER BY nombre"
-    )->fetchAll(PDO::FETCH_ASSOC);
-
     $metodos = $conexion->query(
         "SELECT id, nombre FROM metodos_pago
          WHERE estado = 'Activo' ORDER BY nombre"
@@ -44,8 +42,14 @@ try {
     // Registrar venta
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
+        // Solo los roles con permiso de registro pueden guardar ventas
+        requerirEdicion("ventas");
+
         $cliente_id = filter_input(INPUT_POST, "cliente_id", FILTER_VALIDATE_INT);
-        $usuario_id = filter_input(INPUT_POST, "usuario_id", FILTER_VALIDATE_INT);
+
+        // El responsable es el usuario que inició sesión
+        $usuario_id = (int)$usuarioSesion["id"];
+
         $metodo_pago_id = filter_input(INPUT_POST, "metodo_pago_id", FILTER_VALIDATE_INT);
         $tipo_comprobante = trim($_POST["tipo_comprobante"] ?? "");
         $monto_pago = (float)($_POST["monto_pago"] ?? 0);
@@ -55,8 +59,8 @@ try {
         $descuentos = $_POST["descuento"] ?? [];
         $impuestos_post = $_POST["impuesto_id"] ?? [];
 
-        if (!$cliente_id || !$usuario_id || !$metodo_pago_id) {
-            throw new Exception("Seleccioná el cliente, usuario y método de pago.");
+        if (!$cliente_id || !$metodo_pago_id) {
+            throw new Exception("Seleccioná el cliente y el método de pago.");
         }
 
         $tipos_validos = [
@@ -106,7 +110,7 @@ try {
         $verificar->execute([$usuario_id]);
 
         if (!$verificar->fetchColumn()) {
-            throw new Exception("El usuario seleccionado no está disponible.");
+            throw new Exception("Tu usuario no está activo.");
         }
 
         // Verificar método de pago
@@ -502,26 +506,7 @@ try {
 
 <div class="layout">
 
-    <aside class="menu-lateral">
-        <h2>SISTEMA CONTABLE</h2>
-
-        <button type="button" id="btn-menu"
-            aria-label="Contraer menú"
-            aria-expanded="true">
-            ☰
-        </button>
-
-        <nav>
-            <a href="../index.php">Inicio</a>
-            <a href="clientes.php">Clientes</a>
-            <a href="proveedores.php">Proveedores</a>
-            <a href="productos.php">Productos</a>
-            <a href="ventas.php">Ventas</a>
-            <a href="compras.php">Compras</a>
-            <a href="contabilidad.php">Contabilidad</a>
-            <a href="reportes.php">Reportes</a>
-        </nav>
-    </aside>
+    <?php require "../includes/menu.php"; ?>
 
     <main class="contenido">
 
@@ -541,6 +526,8 @@ try {
                 <?= htmlspecialchars($error) ?>
             </div>
         <?php endif; ?>
+
+        <?php if ($puedeRegistrar): ?>
 
         <?php if (count($clientes) === 0 || count($productos) === 0): ?>
             <div class="aviso-ventas">
@@ -565,15 +552,11 @@ try {
                     <?php endforeach; ?>
                 </select>
 
-                <label>Usuario responsable</label>
-                <select name="usuario_id" required>
-                    <option value="">Seleccionar usuario</option>
-                    <?php foreach ($usuarios as $usuario): ?>
-                        <option value="<?= (int)$usuario["id"] ?>">
-                            <?= htmlspecialchars($usuario["nombre"]) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <p style="margin-top: 15px;">
+                    <strong>Responsable:</strong>
+                    <?= htmlspecialchars($usuarioSesion["nombre"]) ?>
+                    (<?= htmlspecialchars($usuarioSesion["rol"]) ?>)
+                </p>
 
                 <label>Tipo de comprobante</label>
                 <select name="tipo_comprobante" required>
@@ -657,7 +640,6 @@ try {
                     <?= (
                         count($clientes) === 0 ||
                         count($productos) === 0 ||
-                        count($usuarios) === 0 ||
                         count($metodos) === 0
                     ) ? "disabled" : "" ?>>
                     Registrar venta
@@ -666,7 +648,7 @@ try {
 
         </form>
 
-        
+        <?php endif; ?>
 
         <!-- HISTORIAL DE VENTAS -->
         <section class="tarjeta">
@@ -761,6 +743,7 @@ try {
     </main>
 </div>
 
+<?php if ($puedeRegistrar): ?>
 <script>
 const productosDisponibles = <?= json_encode(
     $productos,
@@ -941,6 +924,7 @@ document.getElementById("formVenta")
 
 agregarFila();
 </script>
+<?php endif; ?>
 
 <script src="../assets/js/menu.js"></script>
 

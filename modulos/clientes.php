@@ -1,12 +1,18 @@
-
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+
+requerirAcceso("clientes");
+$puedeEditar = puedeEditar("clientes");
+
 $busqueda = trim($_GET["buscar"] ?? "");
 $filtroEstado = $_GET["estado"] ?? "";
 
 $mensaje = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    requerirEdicion("clientes");
 
     $nombre = trim($_POST["nombre"]);
 
@@ -66,26 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <body>
     <div class="layout">
 
-        <aside class="menu-lateral">
-         <h2>SISTEMA CONTABLE</h2>
-
-           <button type="button" id="btn-menu"
-               aria-label="Contraer menú"
-               aria-expanded="true">
-              ☰
-            </button>
-
-            <nav>
-                <a href="../index.php">Inicio</a>
-                <a href="clientes.php">Clientes</a>
-                <a href="proveedores.php">Proveedores</a>
-                <a href="productos.php">Productos</a>
-                <a href="ventas.php">Ventas</a>
-                <a href="compras.php">Compras</a>
-                <a href="contabilidad.php">Contabilidad</a>
-                <a href="reportes.php">Reportes</a>
-            </nav>
-        </aside>
+        <?php require "../includes/menu.php"; ?>
 
         <main class="contenido">
             <header class="encabezado">
@@ -93,6 +80,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <p>Registro y administración de clientes</p>
             </header>
 
+            <?php if ($puedeEditar): ?>
             <section class="tarjeta">
                 <h2>Registrar nuevo cliente</h2>
 
@@ -126,6 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                 </form>
             </section>
+            <?php endif; ?>
             
             <section class="tarjeta" style="margin-top: 25px;">
                 <h2>Clientes registrados</h2>
@@ -210,7 +199,7 @@ $clientes = $consultaClientes->fetchAll(PDO::FETCH_ASSOC);
                    <th>Correo</th>
                    <th>Dirección</th>
                    <th>Estado</th>
-                   <th>Acciones</th>
+                   <?php if ($puedeEditar): ?><th>Acciones</th><?php endif; ?>
                  </tr>
                  </thead>
 
@@ -226,7 +215,8 @@ $clientes = $consultaClientes->fetchAll(PDO::FETCH_ASSOC);
                     <td><?= htmlspecialchars($cliente["telefono"] ?? "") ?></td>
                     <td><?= htmlspecialchars($cliente["correo"] ?? "") ?></td>
                     <td><?= htmlspecialchars($cliente["direccion"] ?? "") ?></td>
-                    <td><?= htmlspecialchars($cliente["estado"]) ?></td>}
+                    <td><?= htmlspecialchars($cliente["estado"]) ?></td>
+                    <?php if ($puedeEditar): ?>
                     <td>
     <a href="editar_cliente.php?id=<?= $cliente['id'] ?>">
         Editar
@@ -247,6 +237,7 @@ $clientes = $consultaClientes->fetchAll(PDO::FETCH_ASSOC);
 <?php endif; ?>
 
 </td>
+                    <?php endif; ?>
                  </tr>
                 
                  <?php endforeach; ?>
@@ -258,7 +249,6 @@ $clientes = $consultaClientes->fetchAll(PDO::FETCH_ASSOC);
                  <p>Todavía no hay clientes registrados.</p>
 
                  <?php endif; ?>
-                 clientes.</p>
 
             </section>
         

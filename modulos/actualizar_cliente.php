@@ -1,6 +1,8 @@
 
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+requerirEdicion("clientes");
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: clientes.php");

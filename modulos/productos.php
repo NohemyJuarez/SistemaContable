@@ -1,12 +1,17 @@
-
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+
+requerirAcceso("productos");
+$puedeEditar = puedeEditar("productos");
 
 $mensaje = "";
 $busqueda = trim($_GET["buscar"] ?? "");
 $filtroEstado = $_GET["estado"] ?? "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    requerirEdicion("productos");
+
     $codigo = trim($_POST["codigo"] ?? "");
     $nombre = trim($_POST["nombre"] ?? "");
     $descripcion = trim($_POST["descripcion"] ?? "");
@@ -99,17 +104,7 @@ $productos = $consulta->fetchAll(PDO::FETCH_ASSOC);
 
 <div class="contenedor" style="display:flex; min-height:100vh;">
 
-    <aside class="menu-lateral">
-        <h2>SISTEMA CONTABLE</h2>
-        <button type="button" id="btn-menu" aria-label="Contraer menú" aria-expanded="true">☰</button>
-
-        <nav>
-            <a href="../index.php">Inicio</a>
-            <a href="clientes.php">Clientes</a>
-            <a href="proveedores.php">Proveedores</a>
-            <a href="productos.php" class="activo">Productos</a>
-        </nav>
-    </aside>
+    <?php require "../includes/menu.php"; ?>
 
     <main class="contenido">
 
@@ -131,6 +126,7 @@ $productos = $consulta->fetchAll(PDO::FETCH_ASSOC);
         <?php endif; ?>
 
 
+        <?php if ($puedeEditar): ?>
         <section class="tarjeta">
             <h2>Registrar nuevo producto</h2>
 
@@ -163,6 +159,7 @@ $productos = $consulta->fetchAll(PDO::FETCH_ASSOC);
                 <button type="submit">Guardar producto</button>
             </form>
         </section>
+        <?php endif; ?>
 
         <section class="tarjeta">
             <h2>Productos registrados</h2>
@@ -195,7 +192,7 @@ $productos = $consulta->fetchAll(PDO::FETCH_ASSOC);
                             <th>Costo</th>
                             <th>Existencia</th>
                             <th>Estado</th>
-                            <th>Acciones</th>
+                            <?php if ($puedeEditar): ?><th>Acciones</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -209,6 +206,7 @@ $productos = $consulta->fetchAll(PDO::FETCH_ASSOC);
                                     <td>$<?= number_format($producto["costo"], 2) ?></td>
                                     <td><?= $producto["existencia"] ?></td>
                                     <td><?= htmlspecialchars($producto["estado"]) ?></td>
+                                    <?php if ($puedeEditar): ?>
                                     <td>
                                         <a href="editar_producto.php?id=<?= $producto["id"] ?>">Editar</a>
                                         |
@@ -216,11 +214,12 @@ $productos = $consulta->fetchAll(PDO::FETCH_ASSOC);
                                             <?= $producto["estado"] === "Activo" ? "Desactivar" : "Reactivar" ?>
                                         </a>
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8">No se encontraron productos.</td>
+                                <td colspan="<?= $puedeEditar ? 8 : 7 ?>">No se encontraron productos.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

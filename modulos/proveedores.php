@@ -1,6 +1,9 @@
-
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+
+requerirAcceso("proveedores");
+$puedeEditar = puedeEditar("proveedores");
 
 $mensaje = "";
 $busqueda = trim($_GET["buscar"] ?? "");
@@ -8,6 +11,8 @@ $filtroEstado = $_GET["estado"] ?? "";
 
 // Registrar proveedor
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    requerirEdicion("proveedores");
+
     $nombre = trim($_POST["nombre"] ?? "");
     $nit = trim($_POST["nit"] ?? "") ?: null;
     $telefono = trim($_POST["telefono"] ?? "") ?: null;
@@ -91,16 +96,7 @@ $proveedores = $consulta->fetchAll(PDO::FETCH_ASSOC);
 
 <div class="contenedor" style="display:flex; min-height:100vh;">
 
-    <aside class="menu-lateral">
-        <h2>SISTEMA CONTABLE</h2>
-        <button type="button" id="btn-menu" aria-label="Contraer menú" aria-expanded="true">☰</button>
-
-        <nav>
-            <a href="../index.php">Inicio</a>
-            <a href="clientes.php">Clientes</a>
-            <a href="proveedores.php" class="activo">Proveedores</a>
-        </nav>
-    </aside>
+    <?php require "../includes/menu.php"; ?>
 
     <main class="contenido">
 
@@ -121,6 +117,7 @@ $proveedores = $consulta->fetchAll(PDO::FETCH_ASSOC);
     </div>
 <?php endif; ?>
 
+        <?php if ($puedeEditar): ?>
         <section class="tarjeta">
             <h2>Registrar nuevo proveedor</h2>
 
@@ -143,6 +140,7 @@ $proveedores = $consulta->fetchAll(PDO::FETCH_ASSOC);
                 <button type="submit">Guardar proveedor</button>
             </form>
         </section>
+        <?php endif; ?>
 
         <section class="tarjeta">
             <h2>Proveedores registrados</h2>
@@ -175,7 +173,7 @@ $proveedores = $consulta->fetchAll(PDO::FETCH_ASSOC);
                             <th>Correo</th>
                             <th>Dirección</th>
                             <th>Estado</th>
-                            <th>Acciones</th>
+                            <?php if ($puedeEditar): ?><th>Acciones</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -189,6 +187,7 @@ $proveedores = $consulta->fetchAll(PDO::FETCH_ASSOC);
                                     <td><?= htmlspecialchars($proveedor["correo"] ?? "") ?></td>
                                     <td><?= htmlspecialchars($proveedor["direccion"] ?? "") ?></td>
                                     <td><?= htmlspecialchars($proveedor["estado"]) ?></td>
+                                    <?php if ($puedeEditar): ?>
                                     <td>
                                         <a href="editar_proveedor.php?id=<?= $proveedor["id"] ?>">Editar</a>
 
@@ -198,11 +197,12 @@ $proveedores = $consulta->fetchAll(PDO::FETCH_ASSOC);
     | <a href="cambiar_estado_proveedor.php?id=<?= $proveedor["id"] ?>&accion=reactivar">Reactivar</a>
 <?php endif; ?>
                                     </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8">No se encontraron proveedores.</td>
+                                <td colspan="<?= $puedeEditar ? 8 : 7 ?>">No se encontraron proveedores.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
