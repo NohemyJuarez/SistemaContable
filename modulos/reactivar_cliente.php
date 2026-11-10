@@ -1,6 +1,8 @@
 
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+requerirEdicion("clientes");
 
 if (!isset($_GET["id"]) || !ctype_digit($_GET["id"])) {
     die("Cliente no válido.");

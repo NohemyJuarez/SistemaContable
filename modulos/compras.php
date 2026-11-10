@@ -1,13 +1,16 @@
-
 <?php
 require_once "../config/conexion.php";
+require_once "../includes/auth.php";
+
+requerirAcceso("compras");
+$puedeRegistrar = puedeEditar("compras");
+$usuarioSesion = usuarioActual();
 
 $mensaje = "";
 $error = "";
 
 $proveedores = [];
 $productos = [];
-$usuarios = [];
 $impuestos = [];
 $compras = [];
 
@@ -28,14 +31,6 @@ try {
          ORDER BY nombre"
     )->fetchAll(PDO::FETCH_ASSOC);
 
-    // Cargar usuarios activos
-    $usuarios = $conexion->query(
-        "SELECT id, nombre
-         FROM usuarios
-         WHERE estado = 'Activo'
-         ORDER BY nombre"
-    )->fetchAll(PDO::FETCH_ASSOC);
-
     // Cargar impuestos activos
     $impuestos = $conexion->query(
         "SELECT id, nombre, porcentaje
@@ -47,16 +42,21 @@ try {
     // Registrar compra
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
+        // Solo los roles con permiso de registro pueden guardar compras
+        requerirEdicion("compras");
+
         $proveedor_id = filter_input(INPUT_POST, "proveedor_id", FILTER_VALIDATE_INT);
-        $usuario_id = filter_input(INPUT_POST, "usuario_id", FILTER_VALIDATE_INT);
+
+        // El responsable es el usuario que inició sesión
+        $usuario_id = (int)$usuarioSesion["id"];
 
         $productos_post = $_POST["producto_id"] ?? [];
         $cantidades = $_POST["cantidad"] ?? [];
         $costos = $_POST["costo_unitario"] ?? [];
         $impuestos_post = $_POST["impuesto_id"] ?? [];
 
-        if (!$proveedor_id || !$usuario_id) {
-            throw new Exception("Seleccioná el proveedor y el usuario responsable.");
+        if (!$proveedor_id) {
+            throw new Exception("Seleccioná el proveedor.");
         }
 
         if (!is_array($productos_post) || count($productos_post) === 0) {
@@ -92,7 +92,7 @@ try {
         $verificar->execute([$usuario_id]);
 
         if (!$verificar->fetchColumn()) {
-            throw new Exception("El usuario seleccionado no está disponible.");
+            throw new Exception("Tu usuario no está activo.");
         }
 
         $subtotal_general = 0;
@@ -384,26 +384,7 @@ if (isset($_GET["registrada"])) {
 
 <div class="layout">
 
-    <aside class="menu-lateral">
-        <h2>SISTEMA CONTABLE</h2>
-
-        <button type="button" id="btn-menu"
-            aria-label="Contraer menú"
-            aria-expanded="true">
-            ☰
-        </button>
-
-        <nav>
-            <a href="../index.php">Inicio</a>
-            <a href="clientes.php">Clientes</a>
-            <a href="proveedores.php">Proveedores</a>
-            <a href="productos.php">Productos</a>
-            <a href="ventas.php">Ventas</a>
-            <a href="compras.php">Compras</a>
-            <a href="contabilidad.php">Contabilidad</a>
-            <a href="reportes.php">Reportes</a>
-        </nav>
-    </aside>
+    <?php require "../includes/menu.php"; ?>
 
     <main class="contenido">
 
@@ -424,10 +405,12 @@ if (isset($_GET["registrada"])) {
             </div>
         <?php endif; ?>
 
+        <?php if ($puedeRegistrar): ?>
+
         <?php if (count($proveedores) === 0 || count($productos) === 0): ?>
             <div class="aviso-compras">
                 Para registrar una compra necesitás tener al menos
-                un proveedor y un producto activo. .
+                un proveedor y un producto activo.
             </div>
         <?php endif; ?>
 
@@ -450,16 +433,11 @@ if (isset($_GET["registrada"])) {
                     <?php endforeach; ?>
                 </select>
 
-                <label>Usuario responsable</label>
-                <select name="usuario_id" required>
-                    <option value="">Seleccionar usuario</option>
-
-                    <?php foreach ($usuarios as $usuario): ?>
-                        <option value="<?= (int)$usuario["id"] ?>">
-                            <?= htmlspecialchars($usuario["nombre"]) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <p style="margin-top: 15px;">
+                    <strong>Responsable:</strong>
+                    <?= htmlspecialchars($usuarioSesion["nombre"]) ?>
+                    (<?= htmlspecialchars($usuarioSesion["rol"]) ?>)
+                </p>
             </section>
 
             <section class="tarjeta">
@@ -516,14 +494,15 @@ if (isset($_GET["registrada"])) {
                 <button type="submit"
                     <?= (
                         count($proveedores) === 0 ||
-                        count($productos) === 0 ||
-                        count($usuarios) === 0
+                        count($productos) === 0
                     ) ? "disabled" : "" ?>>
                     Registrar compra
                 </button>
             </section>
 
         </form>
+
+        <?php endif; ?>
 
         <section class="tarjeta">
             <h2>Compras registradas</h2>
@@ -576,6 +555,7 @@ if (isset($_GET["registrada"])) {
     </main>
 </div>
 
+<?php if ($puedeRegistrar): ?>
 <script>
 const productosDisponibles = <?= json_encode(
     $productos,
@@ -732,6 +712,7 @@ document.getElementById("formCompra").addEventListener("submit", function(e) {
 
 agregarFila();
 </script>
+<?php endif; ?>
 
 <script src="../assets/js/menu.js"></script>
 
