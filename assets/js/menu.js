@@ -1,5 +1,15 @@
-
 document.addEventListener("DOMContentLoaded", function () {
+
+    // Marca como activo el enlace de la página actual
+    const paginaActual = location.pathname.split("/").pop() || "index.php";
+
+    document.querySelectorAll(".menu-lateral nav a").forEach(function (enlace) {
+        const destino = enlace.getAttribute("href").split("/").pop();
+
+        if (destino === paginaActual) {
+            enlace.classList.add("activo");
+        }
+    });
 
     const menu = document.querySelector(".menu-lateral");
     const boton = document.querySelector("#btn-menu");
