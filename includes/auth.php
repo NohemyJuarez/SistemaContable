@@ -4,10 +4,124 @@
  * Se incluye al inicio de cada página (antes de cualquier HTML).
  */
 
+/*
+ * Guarda las sesiones en la base de datos (tabla "sesiones", se crea sola).
+ * Se activa solo en el servidor, con la variable de entorno SESIONES_EN_BD=1,
+ * porque allí el disco es temporal y las sesiones en archivos se perderían
+ * cada vez que el servicio se apaga o se reinicia.
+ * En XAMPP (local) no se activa y las sesiones funcionan como siempre.
+ */
+class SesionesEnBD implements SessionHandlerInterface
+{
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function open(string $path, string $name): bool
+    {
+        try {
+            $existe = $this->pdo->query("SELECT to_regclass('sesiones')")->fetchColumn();
+
+            if ($existe === null || $existe === false) {
+                $this->pdo->exec(
+                    "CREATE TABLE IF NOT EXISTS sesiones (
+                        id VARCHAR(128) PRIMARY KEY,
+                        datos TEXT NOT NULL,
+                        actualizado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    )"
+                );
+            }
+        } catch (PDOException $e) {
+            error_log("Sesiones: no se pudo preparar la tabla: " . $e->getMessage());
+        }
+
+        return true;
+    }
+
+    public function close(): bool
+    {
+        return true;
+    }
+
+    public function read(string $id): string|false
+    {
+        try {
+            $consulta = $this->pdo->prepare("SELECT datos FROM sesiones WHERE id = :id");
+            $consulta->execute([":id" => $id]);
+            $datos = $consulta->fetchColumn();
+
+            return $datos === false ? "" : $datos;
+        } catch (PDOException $e) {
+            error_log("Sesiones: error al leer: " . $e->getMessage());
+            return "";
+        }
+    }
+
+    public function write(string $id, string $data): bool
+    {
+        try {
+            $consulta = $this->pdo->prepare(
+                "INSERT INTO sesiones (id, datos, actualizado)
+                 VALUES (:id, :datos, CURRENT_TIMESTAMP)
+                 ON CONFLICT (id) DO UPDATE
+                 SET datos = EXCLUDED.datos, actualizado = CURRENT_TIMESTAMP"
+            );
+
+            return $consulta->execute([":id" => $id, ":datos" => $data]);
+        } catch (PDOException $e) {
+            error_log("Sesiones: error al guardar: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function destroy(string $id): bool
+    {
+        try {
+            $this->pdo->prepare("DELETE FROM sesiones WHERE id = :id")->execute([":id" => $id]);
+            return true;
+        } catch (PDOException $e) {
+            error_log("Sesiones: error al eliminar: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function gc(int $max_lifetime): int|false
+    {
+        try {
+            $consulta = $this->pdo->prepare(
+                "DELETE FROM sesiones
+                 WHERE actualizado < CURRENT_TIMESTAMP - make_interval(secs => :segundos)"
+            );
+            $consulta->execute([":segundos" => $max_lifetime]);
+
+            return $consulta->rowCount();
+        } catch (PDOException $e) {
+            error_log("Sesiones: error en la limpieza: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+
 if (session_status() === PHP_SESSION_NONE) {
+
+    if (getenv("SESIONES_EN_BD") === "1") {
+        require_once __DIR__ . "/../config/conexion.php";
+
+        session_set_save_handler(new SesionesEnBD($conexion), true);
+        ini_set("session.gc_maxlifetime", "7200"); // las sesiones duran 2 horas sin actividad
+    }
+
+    // Cookie segura cuando la página se sirve por HTTPS (también detrás del proxy de Render)
+    $esHttps = (!empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off")
+        || (($_SERVER["HTTP_X_FORWARDED_PROTO"] ?? "") === "https");
+
     session_set_cookie_params([
         "httponly" => true,
         "samesite" => "Lax",
+        "secure"   => $esHttps,
     ]);
     session_start();
 }
