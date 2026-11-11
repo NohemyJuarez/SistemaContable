@@ -1,0 +1,274 @@
+.catalogo-cuentas .encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.catalogo-cuentas .encabezado h1 {
+    margin-bottom: 5px;
+}
+
+.boton-nueva {
+    background: #203d63;
+    border-radius: 0;
+    min-width: 190px;
+}
+
+.boton-nueva:hover {
+    background: #142b49;
+}
+
+.filtros-cuentas {
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) minmax(180px, 260px) auto;
+    align-items: end;
+    gap: 10px 18px;
+    padding: 18px;
+    margin-bottom: 18px;
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+}
+
+.filtros-cuentas label {
+    grid-row: 1;
+    margin: 0;
+}
+
+.filtros-cuentas input,
+.filtros-cuentas select {
+    grid-row: 2;
+}
+
+.contador-cuentas {
+    grid-column: 3;
+    grid-row: 2;
+    align-self: center;
+    color: var(--gris);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.tabla-cuentas {
+    overflow-x: auto;
+}
+
+.tabla-cuentas table {
+    min-width: 900px;
+}
+
+.tabla-cuentas th {
+    background: #f0f3f8;
+    color: var(--texto);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tabla-cuentas td {
+    font-size: 14px;
+}
+
+.texto-secundario {
+    color: var(--gris);
+}
+
+.estado-cuenta {
+    font-weight: 700;
+}
+
+.estado-cuenta.activa {
+    color: var(--verde);
+}
+
+.estado-cuenta.inactiva {
+    color: var(--rojo);
+}
+
+.celda-acciones {
+    width: 64px;
+    text-align: center;
+}
+
+.menu-acciones {
+    position: relative;
+    display: inline-block;
+}
+
+.menu-acciones summary {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    background: #101010;
+    color: #fff;
+    cursor: pointer;
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1;
+    list-style: none;
+}
+
+.menu-acciones summary::-webkit-details-marker {
+    display: none;
+}
+
+.opciones-acciones {
+    position: absolute;
+    z-index: 3;
+    top: 40px;
+    right: 0;
+    display: grid;
+    min-width: 155px;
+    padding: 6px;
+    border: 1px solid var(--borde);
+    border-radius: 9px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(30, 25, 50, 0.16);
+    text-align: left;
+}
+
+.opciones-acciones a,
+.opciones-acciones button {
+    display: block;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--texto);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    transform: none;
+}
+
+.opciones-acciones a:hover,
+.opciones-acciones button:hover {
+    background: #f2effa;
+    color: var(--morado-oscuro);
+    transform: none;
+}
+
+.opciones-acciones form {
+    margin: 0;
+}
+
+.modal-cuenta {
+    width: min(620px, calc(100% - 28px));
+    max-height: 90vh;
+    padding: 26px;
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    color: var(--texto);
+    box-shadow: 0 18px 60px rgba(22, 18, 40, 0.25);
+}
+
+.modal-cuenta::backdrop {
+    background: rgba(22, 22, 35, 0.55);
+}
+
+.cabecera-modal {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.cabecera-modal h2 {
+    margin-bottom: 4px;
+}
+
+.cabecera-modal p {
+    color: var(--gris);
+}
+
+.cerrar-modal {
+    padding: 0 8px;
+    background: transparent;
+    color: var(--gris);
+    font-size: 28px;
+    line-height: 1;
+}
+
+.cerrar-modal:hover {
+    background: transparent;
+    color: var(--texto);
+    transform: none;
+}
+
+.campos-cuenta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+}
+
+.campos-cuenta label {
+    margin-top: 10px;
+}
+
+.acciones-formulario {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.boton-secundario {
+    background: #eceaf2;
+    color: var(--texto);
+}
+
+.boton-secundario:hover {
+    background: #ddd9e8;
+}
+
+.detalle-cuenta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.detalle-cuenta dt {
+    color: var(--gris);
+    font-size: 13px;
+}
+
+.detalle-cuenta dd {
+    margin: 4px 0 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.mensaje-error {
+    border-left: 4px solid var(--rojo);
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 700px) {
+    .catalogo-cuentas .encabezado {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .filtros-cuentas {
+        grid-template-columns: 1fr;
+    }
+
+    .filtros-cuentas label,
+    .filtros-cuentas input,
+    .filtros-cuentas select,
+    .contador-cuentas {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+    .campos-cuenta,
+    .detalle-cuenta {
+        grid-template-columns: 1fr;
+    }
+}

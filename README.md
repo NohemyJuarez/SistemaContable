@@ -155,6 +155,7 @@ Cada rol ve únicamente las opciones que le corresponden en el menú.
 | Compras                 | R             | V        | —        | R                       |
 | Libro de compras        | V             | V        | —        | V                       |
 | Contabilidad            | R             | R        | —        | —                       |
+| Catálogo de cuentas     | R             | R        | —        | —                       |
 | Reportes                | V             | V        | —        | —                       |
 | Usuarios                | R             | —        | —        | —                       |
 
@@ -181,7 +182,9 @@ SistemaContable/
 |
 |-- assets/
 |   |-- css/
+|   |   |-- catalogo-cuentas.css
 |   |-- js/
+|   |   |-- catalogo-cuentas.js
 |   |-- img/
 |
 |-- config/
@@ -197,6 +200,7 @@ SistemaContable/
 |   |-- menu.php            (menú lateral según el rol)
 |
 |-- modulos/
+|   |-- cuentas_contables.php
 |
 |-- index.php
 |-- login.php

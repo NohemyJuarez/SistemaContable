@@ -173,6 +173,10 @@ const PERMISOS = [
         "Administrador" => "R",
         "Contador"      => "R",
     ],
+    "catalogo_cuentas" => [
+        "Administrador" => "R",
+        "Contador"      => "R",
+    ],
     "reportes" => [
         "Administrador" => "V",
         "Contador"      => "V",

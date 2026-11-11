@@ -20,6 +20,7 @@ $opcionesMenu = [
     ["compras",       "Compras",          "compras.php"],
     ["libro_compras", "Libro de compras", "libro_compras.php"],
     ["contabilidad",  "Contabilidad",     "contabilidad.php"],
+    ["catalogo_cuentas", "Catálogo de cuentas", "cuentas_contables.php"],
     ["reportes",      "Reportes",         "reportes.php"],
     ["usuarios",      "Usuarios",         "usuarios.php"],
 ];
