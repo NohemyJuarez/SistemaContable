@@ -1,3 +1,4 @@
+
 <?php
 require_once "../config/conexion.php";
 require_once "../includes/auth.php";
@@ -19,7 +20,8 @@ try {
     // Cargar información para los formularios
     $clientes = $conexion->query(
         "SELECT id, nombre FROM clientes
-         WHERE estado = 'Activo' ORDER BY nombre"
+         WHERE estado = 'Activo'
+         ORDER BY nombre"
     )->fetchAll(PDO::FETCH_ASSOC);
 
     $productos = $conexion->query(
@@ -31,33 +33,34 @@ try {
 
     $metodos = $conexion->query(
         "SELECT id, nombre FROM metodos_pago
-         WHERE estado = 'Activo' ORDER BY nombre"
+         WHERE estado = 'Activo'
+         ORDER BY nombre"
     )->fetchAll(PDO::FETCH_ASSOC);
 
     $impuestos = $conexion->query(
-        "SELECT id, nombre, porcentaje FROM impuestos
-         WHERE estado = 'Activo' ORDER BY nombre"
+        "SELECT id, nombre, porcentaje
+         FROM impuestos
+         WHERE estado = 'Activo'
+         ORDER BY nombre"
     )->fetchAll(PDO::FETCH_ASSOC);
 
     // Registrar venta
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-        // Solo los roles con permiso de registro pueden guardar ventas
         requerirEdicion("ventas");
 
         $cliente_id = filter_input(INPUT_POST, "cliente_id", FILTER_VALIDATE_INT);
-
-        // El responsable es el usuario que inició sesión
         $usuario_id = (int)$usuarioSesion["id"];
-
         $metodo_pago_id = filter_input(INPUT_POST, "metodo_pago_id", FILTER_VALIDATE_INT);
+
         $tipo_comprobante = trim($_POST["tipo_comprobante"] ?? "");
-        $monto_pago = (float)($_POST["monto_pago"] ?? 0);
+        $monto_pago = $_POST["monto_pago"] ?? "";
 
         $productos_post = $_POST["producto_id"] ?? [];
         $cantidades = $_POST["cantidad"] ?? [];
         $descuentos = $_POST["descuento"] ?? [];
         $impuestos_post = $_POST["impuesto_id"] ?? [];
+        $clasificaciones_post = $_POST["clasificacion_fiscal"] ?? [];
 
         if (!$cliente_id || !$metodo_pago_id) {
             throw new Exception("Seleccioná el cliente y el método de pago.");
@@ -73,18 +76,28 @@ try {
             throw new Exception("Seleccioná un tipo de comprobante válido.");
         }
 
-        if (!is_array($productos_post) || count($productos_post) === 0) {
+        if (
+            !is_array($productos_post) ||
+            count($productos_post) === 0
+        ) {
             throw new Exception("Agregá al menos un producto o servicio.");
         }
 
-        if ($monto_pago < 0) {
-            throw new Exception("El monto recibido no puede ser negativo.");
+        if (!is_numeric($monto_pago) || (float)$monto_pago < 0) {
+            throw new Exception("El monto recibido no es válido.");
         }
 
+        $monto_pago = (float)$monto_pago;
+
         if (
+            !is_array($cantidades) ||
+            !is_array($descuentos) ||
+            !is_array($impuestos_post) ||
+            !is_array($clasificaciones_post) ||
             count($productos_post) !== count($cantidades) ||
             count($productos_post) !== count($descuentos) ||
-            count($productos_post) !== count($impuestos_post)
+            count($productos_post) !== count($impuestos_post) ||
+            count($productos_post) !== count($clasificaciones_post)
         ) {
             throw new Exception("Los datos del detalle de la venta están incompletos.");
         }
@@ -132,14 +145,50 @@ try {
 
             $producto_id = filter_var($producto_id, FILTER_VALIDATE_INT);
             $cantidad = filter_var($cantidades[$i], FILTER_VALIDATE_INT);
+
+            if (!is_numeric($descuentos[$i])) {
+                throw new Exception("Uno de los descuentos no es válido.");
+            }
+
             $descuento = (float)$descuentos[$i];
 
             $impuesto_id = ($impuestos_post[$i] ?? "") !== ""
                 ? filter_var($impuestos_post[$i], FILTER_VALIDATE_INT)
                 : null;
 
-            if (!$producto_id || !$cantidad || $cantidad < 1 || $descuento < 0) {
+            $clasificacion = trim($clasificaciones_post[$i] ?? "");
+
+            $clasificaciones_validas = [
+                "Gravada",
+                "Exenta",
+                "No sujeta"
+            ];
+
+            if (!in_array($clasificacion, $clasificaciones_validas, true)) {
+                throw new Exception("Seleccioná una clasificación fiscal válida.");
+            }
+
+            if (
+                !$producto_id ||
+                !$cantidad ||
+                $cantidad < 1 ||
+                $descuento < 0
+            ) {
                 throw new Exception("Revisá los productos, cantidades y descuentos.");
+            }
+
+            // Una línea exenta o no sujeta no debe tener impuesto seleccionado.
+            if ($clasificacion !== "Gravada" && $impuesto_id !== null) {
+                throw new Exception(
+                    "Las líneas exentas o no sujetas no deben llevar impuesto."
+                );
+            }
+
+            // Una línea gravada debe tener un impuesto seleccionado.
+            if ($clasificacion === "Gravada" && $impuesto_id === null) {
+                throw new Exception(
+                    "Seleccioná el impuesto correspondiente para las líneas gravadas."
+                );
             }
 
             // Bloquear el producto durante el registro
@@ -170,7 +219,9 @@ try {
             $subtotal = ($precio * $cantidad) - $descuento;
 
             if ($subtotal < 0) {
-                throw new Exception("El descuento no puede superar el importe de la línea.");
+                throw new Exception(
+                    "El descuento no puede superar el importe de la línea."
+                );
             }
 
             $porcentaje = 0;
@@ -182,7 +233,8 @@ try {
                 }
 
                 $consulta_impuesto = $conexion->prepare(
-                    "SELECT porcentaje FROM impuestos
+                    "SELECT porcentaje
+                     FROM impuestos
                      WHERE id = ? AND estado = 'Activo'"
                 );
 
@@ -209,6 +261,7 @@ try {
                 "subtotal" => $subtotal,
                 "impuesto_id" => $impuesto_id,
                 "porcentaje" => $porcentaje,
+                "clasificacion_fiscal" => $clasificacion,
                 "tipo" => $producto["tipo"]
             ];
         }
@@ -216,7 +269,9 @@ try {
         $total = $subtotal_general + $impuesto_general;
 
         if ($monto_pago > $total) {
-            throw new Exception("El monto recibido no puede superar el total de la venta.");
+            throw new Exception(
+                "El monto recibido no puede superar el total de la venta."
+            );
         }
 
         $estado = ($total > 0 && $monto_pago >= $total)
@@ -245,12 +300,21 @@ try {
 
         $venta_id = $insertar_venta->fetchColumn();
 
-        // Guardar detalle
+        // Guardar detalle incluyendo la clasificación fiscal
         $insertar_detalle = $conexion->prepare(
             "INSERT INTO detalle_ventas
-            (venta_id, producto_id, cantidad, precio_unitario,
-             descuento, subtotal, impuesto_id, porcentaje_impuesto)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            (
+                venta_id,
+                producto_id,
+                cantidad,
+                precio_unitario,
+                descuento,
+                subtotal,
+                impuesto_id,
+                porcentaje_impuesto,
+                clasificacion_fiscal
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
         // Actualizar inventario
@@ -277,7 +341,8 @@ try {
                 $detalle["descuento"],
                 $detalle["subtotal"],
                 $detalle["impuesto_id"],
-                $detalle["porcentaje"]
+                $detalle["porcentaje"],
+                $detalle["clasificacion_fiscal"]
             ]);
 
             if ($detalle["tipo"] === "Producto") {
@@ -311,9 +376,20 @@ try {
             ]);
         }
 
-        // Crear comprobante interno
-        $numero_comprobante = "C-" . date("YmdHis") . "-" . random_int(100, 999);
+        // Generar número según el tipo de comprobante
+        $prefijos = [
+            "Factura" => "FC-",
+            "Comprobante de crédito fiscal" => "CCF-",
+            "Comprobante interno" => "INT-"
+        ];
 
+        $numero_comprobante =
+            $prefijos[$tipo_comprobante] .
+            date("YmdHis") .
+            "-" .
+            random_int(100, 999);
+
+        // Guardar comprobante
         $insertar_comprobante = $conexion->prepare(
             "INSERT INTO comprobantes
             (venta_id, tipo_comprobante, numero_comprobante, estado)
@@ -401,7 +477,7 @@ try {
         .tabla-ventas input,
         .tabla-ventas select {
             width: 100%;
-            min-width: 90px;
+            min-width: 100px;
             padding: 9px;
             border: 1px solid #ddd;
             border-radius: 6px;
@@ -449,6 +525,15 @@ try {
             margin-bottom: 20px;
         }
 
+        .aviso-fiscal {
+            background: #f3edfa;
+            color: #54247f;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+
         .boton-quitar {
             background: #ffe6e6;
             color: #a32323;
@@ -486,13 +571,13 @@ try {
         }
 
         .tabla-historial th {
-    background: #7136a5;
-    color: #ffffff;
-    font-weight: bold;
-    white-space: nowrap;
-    padding: 14px 12px;
-    border-bottom: 2px solid #54247f;
-}
+            background: #7136a5;
+            color: #ffffff;
+            font-weight: bold;
+            white-space: nowrap;
+            padding: 14px 12px;
+            border-bottom: 2px solid #54247f;
+        }
 
         .sin-registros {
             text-align: center;
@@ -529,124 +614,137 @@ try {
 
         <?php if ($puedeRegistrar): ?>
 
-        <?php if (count($clientes) === 0 || count($productos) === 0): ?>
-            <div class="aviso-ventas">
-                Para registrar una venta necesitás tener al menos
-                un cliente y un producto o servicio activo.
-                Podés continuar desarrollando el módulo mientras tanto.
-            </div>
-        <?php endif; ?>
-
-        <form method="POST" id="formVenta">
-
-            <section class="tarjeta">
-                <h2>Información de la venta</h2>
-
-                <label>Cliente</label>
-                <select name="cliente_id" required>
-                    <option value="">Seleccionar cliente</option>
-                    <?php foreach ($clientes as $cliente): ?>
-                        <option value="<?= (int)$cliente["id"] ?>">
-                            <?= htmlspecialchars($cliente["nombre"]) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-
-                <p style="margin-top: 15px;">
-                    <strong>Responsable:</strong>
-                    <?= htmlspecialchars($usuarioSesion["nombre"]) ?>
-                    (<?= htmlspecialchars($usuarioSesion["rol"]) ?>)
-                </p>
-
-                <label>Tipo de comprobante</label>
-                <select name="tipo_comprobante" required>
-                    <option value="">Seleccionar comprobante</option>
-                    <option value="Factura">Factura</option>
-                    <option value="Comprobante de crédito fiscal">Comprobante de crédito fiscal</option>
-                    <option value="Comprobante interno">Comprobante interno</option>
-                </select>
-
-                <label>Método de pago</label>
-                <select name="metodo_pago_id" required>
-                    <option value="">Seleccionar método</option>
-                    <?php foreach ($metodos as $metodo): ?>
-                        <option value="<?= (int)$metodo["id"] ?>">
-                            <?= htmlspecialchars($metodo["nombre"]) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </section>
-
-            <section class="tarjeta">
-                <h2>Detalle de productos o servicios</h2>
-
-                <div class="tabla-contenedor">
-                    <table class="tabla-ventas">
-                        <thead>
-                            <tr>
-                                <th>Producto o servicio</th>
-                                <th>Cantidad</th>
-                                <th>Descuento ($)</th>
-                                <th>Impuesto</th>
-                                <th>Subtotal</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="filasProductos"></tbody>
-                    </table>
+            <?php if (count($clientes) === 0 || count($productos) === 0): ?>
+                <div class="aviso-ventas">
+                    Para registrar una venta necesitás tener al menos
+                    un cliente y un producto o servicio activo.
+                    Podés continuar desarrollando el módulo mientras tanto.
                 </div>
+            <?php endif; ?>
 
-                <button type="button" id="agregarProducto">
-                    + Agregar producto
-                </button>
+            <form method="POST" id="formVenta">
 
-                <div class="resumen-venta">
-                    <div>
-                        <span>Subtotal:</span>
-                        <strong id="subtotalTexto">$0.00</strong>
+                <section class="tarjeta">
+                    <h2>Información de la venta</h2>
+
+                    <label>Cliente</label>
+                    <select name="cliente_id" required>
+                        <option value="">Seleccionar cliente</option>
+
+                        <?php foreach ($clientes as $cliente): ?>
+                            <option value="<?= (int)$cliente["id"] ?>">
+                                <?= htmlspecialchars($cliente["nombre"]) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <p style="margin-top: 15px;">
+                        <strong>Responsable:</strong>
+                        <?= htmlspecialchars($usuarioSesion["nombre"]) ?>
+                        (<?= htmlspecialchars($usuarioSesion["rol"]) ?>)
+                    </p>
+
+                    <label>Tipo de comprobante</label>
+                    <select name="tipo_comprobante" required>
+                        <option value="">Seleccionar comprobante</option>
+                        <option value="Factura">Factura</option>
+                        <option value="Comprobante de crédito fiscal">
+                            Comprobante de crédito fiscal
+                        </option>
+                        <option value="Comprobante interno">
+                            Comprobante interno
+                        </option>
+                    </select>
+
+                    <label>Método de pago</label>
+                    <select name="metodo_pago_id" required>
+                        <option value="">Seleccionar método</option>
+
+                        <?php foreach ($metodos as $metodo): ?>
+                            <option value="<?= (int)$metodo["id"] ?>">
+                                <?= htmlspecialchars($metodo["nombre"]) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </section>
+
+                <section class="tarjeta">
+                    <h2>Detalle de productos o servicios</h2>
+
+                    <div class="aviso-fiscal">
+                        Seleccioná la clasificación fiscal correspondiente a cada línea.
+                        Las líneas gravadas deben llevar un impuesto; las exentas y
+                        no sujetas no calculan IVA.
                     </div>
 
-                    <div>
-                        <span>Impuestos:</span>
-                        <strong id="impuestoTexto">$0.00</strong>
+                    <div class="tabla-contenedor">
+                        <table class="tabla-ventas">
+                            <thead>
+                                <tr>
+                                    <th>Producto o servicio</th>
+                                    <th>Cantidad</th>
+                                    <th>Descuento ($)</th>
+                                    <th>Clasificación fiscal</th>
+                                    <th>Impuesto</th>
+                                    <th>Subtotal</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="filasProductos"></tbody>
+                        </table>
                     </div>
 
-                    <div class="total">
-                        <span>Total:</span>
-                        <strong id="totalTexto">$0.00</strong>
+                    <button type="button" id="agregarProducto">
+                        + Agregar producto
+                    </button>
+
+                    <div class="resumen-venta">
+                        <div>
+                            <span>Subtotal:</span>
+                            <strong id="subtotalTexto">$0.00</strong>
+                        </div>
+
+                        <div>
+                            <span>Impuestos:</span>
+                            <strong id="impuestoTexto">$0.00</strong>
+                        </div>
+
+                        <div class="total">
+                            <span>Total:</span>
+                            <strong id="totalTexto">$0.00</strong>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <section class="tarjeta">
-                <h2>Información del pago</h2>
+                <section class="tarjeta">
+                    <h2>Información del pago</h2>
 
-                <label>Monto recibido ($)</label>
+                    <label>Monto recibido ($)</label>
 
-                <input
-                    type="number"
-                    name="monto_pago"
-                    id="monto_pago"
-                    min="0"
-                    step="0.01"
-                    value="0"
-                    required
-                >
+                    <input
+                        type="number"
+                        name="monto_pago"
+                        id="monto_pago"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                        required
+                    >
 
-                <p>Si el pago es menor que el total, la venta quedará pendiente.</p>
+                    <p>Si el pago es menor que el total, la venta quedará pendiente.</p>
 
-                <button type="submit"
-                    <?= (
-                        count($clientes) === 0 ||
-                        count($productos) === 0 ||
-                        count($metodos) === 0
-                    ) ? "disabled" : "" ?>>
-                    Registrar venta
-                </button>
-            </section>
+                    <button type="submit"
+                        <?= (
+                            count($clientes) === 0 ||
+                            count($productos) === 0 ||
+                            count($metodos) === 0
+                        ) ? "disabled" : "" ?>>
+                        Registrar venta
+                    </button>
+                </section>
 
-        </form>
+            </form>
 
         <?php endif; ?>
 
@@ -802,7 +900,6 @@ function agregarFila() {
 
                 ${escaparHTML(i.nombre)}
                 (${Number(i.porcentaje)}%)
-
             </option>
         `).join("")}
     `;
@@ -816,26 +913,42 @@ function agregarFila() {
         </td>
 
         <td>
-            <input type="number"
+            <input
+                type="number"
                 name="cantidad[]"
                 class="cantidad"
                 min="1"
                 value="1"
-                required>
+                required
+            >
         </td>
 
         <td>
-            <input type="number"
+            <input
+                type="number"
                 name="descuento[]"
                 class="descuento"
                 min="0"
                 step="0.01"
                 value="0"
-                required>
+                required
+            >
         </td>
 
         <td>
-            <select name="impuesto_id[]" class="impuesto">
+            <select
+                name="clasificacion_fiscal[]"
+                class="clasificacion"
+                required
+            >
+                <option value="Gravada" selected>Gravada</option>
+                <option value="Exenta">Exenta</option>
+                <option value="No sujeta">No sujeta</option>
+            </select>
+        </td>
+
+        <td>
+            <select name="impuesto_id[]" class="impuesto" required>
                 ${opcionesImpuestos}
             </select>
         </td>
@@ -874,10 +987,31 @@ function calcularTotales() {
         const producto = fila.querySelector(".producto");
         const cantidad = Number(fila.querySelector(".cantidad").value);
         const descuento = Number(fila.querySelector(".descuento").value);
+
+        const clasificacion = fila.querySelector(".clasificacion");
         const impuesto = fila.querySelector(".impuesto");
 
-        const opcionProducto = producto.selectedOptions[0];
+        // Si no es gravada, se limpia el impuesto.
+        // El select permanece habilitado para que se envíe al servidor.
+        if (clasificacion.value !== "Gravada") {
 
+            impuesto.value = "";
+            impuesto.required = false;
+
+            impuesto.querySelectorAll("option").forEach(opcion => {
+                opcion.disabled = opcion.value !== "";
+            });
+
+        } else {
+
+            impuesto.required = true;
+
+            impuesto.querySelectorAll("option").forEach(opcion => {
+                opcion.disabled = false;
+            });
+        }
+
+        const opcionProducto = producto.selectedOptions[0];
         const precio = Number(opcionProducto?.dataset.precio || 0);
 
         const subtotal = Math.max(
@@ -885,9 +1019,9 @@ function calcularTotales() {
             (precio * cantidad) - descuento
         );
 
-        const porcentaje = Number(
-            impuesto.selectedOptions[0]?.dataset.porcentaje || 0
-        );
+        const porcentaje = clasificacion.value === "Gravada"
+            ? Number(impuesto.selectedOptions[0]?.dataset.porcentaje || 0)
+            : 0;
 
         const impuestoLinea = subtotal * porcentaje / 100;
 
@@ -919,6 +1053,27 @@ document.getElementById("formVenta")
         if (filas.children.length === 0) {
             e.preventDefault();
             alert("Agregá al menos un producto o servicio.");
+            return;
+        }
+
+        // Comprobar que las líneas gravadas tengan impuesto.
+        let detalleInvalido = false;
+
+        document.querySelectorAll("#filasProductos tr").forEach(fila => {
+            const clasificacion = fila.querySelector(".clasificacion");
+            const impuesto = fila.querySelector(".impuesto");
+
+            if (
+                clasificacion.value === "Gravada" &&
+                impuesto.value === ""
+            ) {
+                detalleInvalido = true;
+            }
+        });
+
+        if (detalleInvalido) {
+            e.preventDefault();
+            alert("Seleccioná un impuesto para cada línea gravada.");
         }
     });
 

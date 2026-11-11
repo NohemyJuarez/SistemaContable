@@ -164,16 +164,30 @@ const PERMISOS = [
         "Contador"                => "V",
         "Encargado de inventario" => "R",
     ],
-    "libro_compras" => [
-        "Administrador"           => "V",
-        "Contador"                => "V",
-        "Encargado de inventario" => "V",
-    ],
-    "contabilidad" => [
+    
+    "catalogo_cuentas" => [
         "Administrador" => "R",
         "Contador"      => "R",
     ],
-    "catalogo_cuentas" => [
+    "libro_compras" => [
+    "Administrador"           => "V",
+    "Contador"                => "V",
+    "Encargado de inventario" => "V",
+    ],
+    "libro_ventas" => [
+    "Administrador" => "V",
+    "Contador"      => "V",
+    ],
+    "libro_diario" => [
+    "Administrador" => "R",
+    "Contador"      => "R",
+    ],
+
+    "libro_mayor" => [
+    "Administrador" => "V",
+    "Contador"      => "V",
+    ],
+    "contabilidad" => [
         "Administrador" => "R",
         "Contador"      => "R",
     ],

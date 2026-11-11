@@ -136,6 +136,20 @@
     content: "▤";
 }
 
+/* ICONOS DE LOS APARTADOS CONTABLES */
+
+.menu-lateral a[href*="cuentas_contables.php"]::before {
+    content: "▦" !important;
+}
+
+.menu-lateral a[href*="libro_diario.php"]::before {
+    content: "▤" !important;
+}
+
+.menu-lateral a[href*="libro_mayor.php"]::before {
+    content: "▥" !important;
+}
+
 .menu-lateral a[href*="contabilidad.php"]::before {
     content: "▥";
 }

@@ -154,6 +154,7 @@ Cada rol ve únicamente las opciones que le corresponden en el menú.
 | Ventas                  | R             | V        | R        | —                       |
 | Compras                 | R             | V        | —        | R                       |
 | Libro de compras        | V             | V        | —        | V                       |
+| Libro de ventas         | V             | V        | —        | —                       |
 | Contabilidad            | R             | R        | —        | —                       |
 | Catálogo de cuentas     | R             | R        | —        | —                       |
 | Reportes                | V             | V        | —        | —                       |
