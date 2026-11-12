@@ -132,7 +132,6 @@ try {
         // Consultar movimientos contabilizados del período.
         $consultaMovimientos = $conexion->prepare(
             "SELECT
-              SELECT
     m.id,
     p.id AS partida_id,
     m.descripcion AS descripcion_movimiento,
